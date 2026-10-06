@@ -1,12 +1,8 @@
 # Suite catalogue
 
-No suites have been added yet. Use the [authoring template](../templates/suite/README.md)
-and follow the [repository guide](../README.md) to add one.
-
-When adding a suite, replace this empty state with a table containing:
-
 | Suite | Purpose | Status | Runner |
 | --- | --- | --- | --- |
+| [lean-formalization](lean-formalization/README.md) | Blueprint-first formalization of a mathematical text (a book or paper) in Lean 4 / Mathlib: one source section per task, every statement checked against the extracted source by an independent reviewer, every open proof tracked in a per-file `sorry` allowlist. | experimental | `--agent tend` |
 
 Link each suite name to its README. Use `draft` for suites under development,
 `experimental` for suites being tried on tasks, and `maintained` for suites with
