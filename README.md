@@ -5,8 +5,8 @@ keeps a worker's instructions, its revision workflow, and the reviewer's criteri
 together so they can be selected and changed as a unit.
 
 Browse the [suite catalogue](suites/README.md), or start a new suite from the
-[authoring template](templates/suite/README.md). No task-specific suites have
-been added yet.
+[authoring template](templates/suite/README.md). The first suite,
+[tech-debt-reduction](suites/tech-debt-reduction/README.md), is listed there.
 
 ## Repository layout
 
