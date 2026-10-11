@@ -156,9 +156,11 @@ Evidence is for the **underlying practice**, not for this suite as run:
 - The gate enforced a whole-tree hole census of zero (sorry/axiom and kin) before
   every merge and as a cold from-scratch audit; a holed change can compile, so the
   census ran first and fast.
-- The absorber test was a measured filter, not a slogan: in one cleanup pass it
-  rejected 65 of 121 candidate removals that all compiled green, because deleting
-  them required a compensating change — the debt would have moved, not left.
+- The absorber test was a measured filter, not a slogan: in one cleanup pass only
+  **56 of 121** candidate removals that all compiled green were genuinely removable;
+  the other **65** were rejected because deleting them required a compensating change
+  — the debt would have moved, not left. (Breakdown by kind and by absorption
+  mechanism is in the reference playbook, §1.7.)
 - A toolchain bump made 6 of 7 performance workarounds obsolete and let 5 more be
   deleted, which is why the suite insists on a green baseline before cleaning and on
   letting the compiler, not a heuristic, decide each removal.
