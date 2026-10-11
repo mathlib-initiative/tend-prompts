@@ -4,9 +4,19 @@
 codebase (a ~1,250-file Lean 4 / Mathlib formalization maintained by an agent swarm), then
 abstracted to any language and repo. The original's specifics (Lean/Mathlib, `set_option`,
 `sorry`, `erw`, `@[expose]`) appear only as worked examples; every rule below is meant to
-transfer. Where a lesson was paid for with a real incident, the incident is named — with its
-real file names and measured numbers — so the rule keeps its teeth. The numbers are the
-project's actual tracker/log figures, not illustrations.*
+transfer. Two kinds of example appear, and they are labelled differently on purpose:*
+
+- ***Mechanism snippets*** — *how a Lean/Mathlib feature behaves (`rw` vs `erw`, transparency,
+  `@[reassoc]`, `eqToHom`, the absorber test). These depend on **Mathlib alone, with no
+  dependency on the source project**, so any reader can run them; they are collected in one
+  runnable file, [`reference/mathlib-examples.lean`](reference/mathlib-examples.lean) — if it
+  compiles, every positive claim in them holds. Each was verified on
+  `leanprover/lean4:v4.35.0-rc3` + Mathlib `8de4fb72`; the exact compiler errors quoted for the
+  "… fails" contrasts are observed, not imagined.*
+- ***Measurements & incidents*** — *campaign figures and specific failures (e.g. "56 of 121
+  removable", the 7,300-line comment cascade, 101→97). These are the source project's actual
+  tracker/log numbers, **not reproducible from Mathlib** by construction; they are named with
+  their real files and counts so the rule keeps its teeth. They are evidence, not illustrations.*
 
 ---
 
@@ -101,6 +111,9 @@ numbers out loud when they turn out wrong.
    -- after @[expose]: the goal no longer folds the two nested map_zeros, so it must fire twice
    erw [LinearMap.map_zero, LinearMap.map_zero]
    ```
+   *(Source-project incident. The generic `erw`-vs-`rw` mechanism underneath it — why a rewrite
+   that `rw` can't place is load-bearing — is reproduced Mathlib-only in §5.5 and
+   [`reference/mathlib-examples.lean`](reference/mathlib-examples.lean).)*
 
 7. **Removal ≠ deletion: a debt only leaves if nothing absorbs its work.** This is the rule the
    whole playbook orbits, and the one most people get wrong. A workaround that still compiles after
@@ -138,6 +151,32 @@ numbers out loud when they turn out wrong.
      exact h₁.trans h₂   -- but `exact` now unifies at DEFAULT and absorbs the gap:
                          -- the debt moved into the closer, undocumented. NOT removed.
    ```
+   The fence above is the source project's own case (that flag was measured load-bearing 87% of
+   the time — §7.1). The *same principle* is reproducible **Mathlib-only** with a transparency gap
+   you can run yourself — a semireducible `def F n := n`, where `F a` is defeq to `a` at default
+   but not at reducible transparency. Both versions below compile green:
+   ```lean
+   def F (n : Nat) : Nat := n
+   -- A (workaround present): an explicit `change` unfolds F, then `rfl` closes.
+   example (a : Nat) : F a = a := by
+     change a = a
+     rfl
+   -- B (bridge deleted): STILL GREEN — a naive "does it still build?" calls the bridge removable.
+   -- It is not: `rfl` unifies at DEFAULT transparency and silently absorbs the same unfolding.
+   example (a : Nat) : F a = a := by
+     rfl
+   -- WITNESS that the work only MOVED: a reducible-only closer FAILS without the bridge
+   --   example (a : Nat) : F a = a := by with_reducible rfl
+   --   ⊢ error: Tactic `rfl` failed: the left-hand side F a is not definitionally equal to a
+   -- but PASSES with it — so B compiled only because `rfl` absorbed the bridge's unfolding:
+   example (a : Nat) : F a = a := by
+     change a = a
+     with_reducible rfl
+   ```
+   *(Honest scope: `backward.isDefEq.respectTransparency false` is **not** itself an "ignore
+   transparency" knob — with it set false, `with_reducible rfl` on `F a = a` still fails; it
+   governs a narrower backward-compat behaviour. The portable absorber trap is the
+   `with_reducible`-vs-default gap shown here, which is why the Mathlib-only demo uses it.)*
 
 ---
 
@@ -348,6 +387,16 @@ Run every cleanup round the same way:
    -- inside a flag-carrying declaration the flag blinds the oracle, so re-assert strictness:
    set_option backward.isDefEq.respectTransparency true in with_implicit exact closer
    ```
+   `with_implicit` is the source project's own tactic, not a Mathlib one — but the *discriminator*
+   it implements is reproducible **Mathlib-only**: strict `erw` passing where strict `rw` fails is
+   exactly "the extra unfolding is load-bearing, keep the debt."
+   ```lean
+   def g (n : Nat) : Nat := n
+   example (P : Nat → Nat) (a c : Nat) (key : P (g a) = c) : P a = c := by
+     erw [key]        -- passes: `erw` matches the argument `g a` at DEFAULT transparency
+   -- the SAME goal with `rw [key]` fails ("Did not find an occurrence of the pattern P (g a)"),
+   -- because `rw` matches arguments at reducible transparency ⇒ the unfolding is load-bearing.
+   ```
 
 6. **Before crediting a *change* with freeing debt, use a control tree.** When a bump/upstream-PR/new
    abstraction lands, it is tempting to credit it with every removal that becomes possible afterward.
@@ -401,8 +450,13 @@ Every rule here was paid for with a real incident.
    messier than the damage: reverting by *content* over-fired on files holding both `rw [X]` and
    `rw [X, X]`, taking four passes to settle on the **2** legitimate dedupes.
    ```lean
-   rw [h, h]          -- sequence: rewrites twice; collapsing to rw [h] => 28 errors
-   simp only [X, X]   -- set: idempotent, collapse is safe
+   -- Mathlib-only, runnable: with `h : f a = a`, the goal `f (f a) = a` has ONE copy of `f a`.
+   example {α : Type*} (f : α → α) (a : α) (h : f a = a) : f (f a) = a := by
+     rw [h, h]        -- SEQUENCE: needs both; collapsing to `rw [h]` leaves ⊢ f a = a unsolved
+   example {α : Type*} (f : α → α) (a : α) (h : f a = a) : f (f a) = a := by
+     simp only [h]    -- SET (idempotent): one copy suffices; `simp only [h, h]` is identical
+   -- Lean's own linter.unusedSimpArgs even flags the duplicate in `simp only [h, h]` and suggests
+   -- `simp only [h]` — the toolchain endorsing the collapse that is SAFE for the set, fatal for rw.
    -- Rule: for 3 known sites, edit them by hand; never reach for a repo-wide pass.
    ```
 
@@ -490,6 +544,18 @@ Every rule here was paid for with a real incident.
    ```text
    # exit-code check: PASS (file compiles) -> removal accepted, consumer silently broken
    # signature check: baseline hash != post-edit hash  ->  REJECT even though the build is green
+   ```
+   Mathlib-only, runnable: the companion lemma is *auto-generated* and its statement is a derived,
+   re-elaborated transform of the parent — which is exactly why it can drift while the parent's
+   source bytes do not (`variable {C : Type*} [Category C]`):
+   ```lean
+   @[reassoc] lemma foo {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) (h : X ⟶ Z) (w : f ≫ g = h) :
+       f ≫ g = h := w
+   #check @foo_assoc   -- auto-generated (never written):  f ≫ g ≫ h_1 = h ≫ h_1
+   -- Give a parent whose LHS is left-associated `(f ≫ g) ≫ q`; its `bar_assoc` comes back fully
+   -- RIGHT-associated `f ≫ g ≫ q ≫ h` — the attribute re-ran associativity, proving the generated
+   -- type is COMPUTED from the ambient simp set, not copied. A "parent unchanged" check can't see
+   -- that move; only a hash of the generated declaration's elaborated type catches it.
    ```
 
 3. **Read the log / the real exit status, never a wrapper's.** A wrapper's or a pipeline's exit code
@@ -585,11 +651,14 @@ produce a handful of recurring breakage *patterns* rather than N unique bugs. Tr
    were hand-fixed and **1053** were mechanical-only; the whole-tree build stayed green (5260 jobs),
    the census stayed at 0 holes, and the net tracked-debt cost was just the **+3** `erw` of §1.6.
    ```lean
-   -- Class (B) fix — pin the cast target the new elaboration order can't infer
-   -- before: target inferred from the other side -> stuck metavariable
-   eqToHom (by rw [...])
-   -- after: copy the stuck goal verbatim (note the .X₁ form, not bare X)
-   eqToHom (show C.X₁ = D.X₁ by rw [...])
+   -- Class (B) fix — pin the cast target the new elaboration order can't infer.
+   -- Mathlib-only, runnable:
+   example {C : Type*} [Category C] (X Y : C) (h : X = Y) : X ⟶ Y :=
+     eqToHom (show X = Y by rw [h])   -- target PINNED with `show`: elaborates
+   -- Left implicit as `eqToHom (by rw [h])` where the objects can't be inferred, it FAILS with
+   -- "motive is not type correct", goal ⊢ ?m = ?m. The fix is literally adding `show X = Y`.
+   -- (In the source project the trigger was @[expose] reordering elaboration and the pinned form
+   -- was `eqToHom (show C.X₁ = D.X₁ by rw [...])`; the stuck-target mechanism and fix are identical.)
    ```
 
 2. **No blanket switch fixes a class for free — pin each site that genuinely needs it individually,**

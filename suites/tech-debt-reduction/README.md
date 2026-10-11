@@ -137,6 +137,18 @@ it. It is supporting material for operators standing up the tracker and gates; i
 is **not** an automatically loaded prompt. Read it to adapt the `<<LIKE_THIS>>`
 values and the marker sets to your repo.
 
+[`reference/mathlib-examples.lean`](reference/mathlib-examples.lean) is a runnable
+companion: every Lean *mechanism* the playbook cites (the absorber test, `rw` vs
+`erw`, transparency, `@[reassoc]`, `eqToHom`) reproduced against **Mathlib only** —
+no dependency on the source project — so a reader can verify the behaviour directly.
+If it compiles, every positive claim in those snippets holds; each "… fails" contrast
+is shown in a comment with the exact observed error. Verified on
+`leanprover/lean4:v4.35.0-rc3` + Mathlib `8de4fb72`: `lake env lean
+reference/mathlib-examples.lean` from any project whose `LEAN_PATH` includes a built
+Mathlib. The playbook's *measurements and incidents* are source-project campaign
+evidence and are not reproducible from Mathlib by construction; they stay labelled as
+such in the playbook.
+
 ## Evaluation and provenance
 
 Derived from the technical-debt tracker, gate, and cleanup discipline of the
