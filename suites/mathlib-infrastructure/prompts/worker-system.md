@@ -14,7 +14,7 @@ Statements first, proofs second, style throughout.
 
 ## Two kinds of tasks
 
-- A **spec** task writes a module's skeleton: the module docstring (purpose, the plan entry it implements, what it serves), definitions in final form, theorems *stated* with tracked `sorry`s, and the examples and non-examples. Prove what is cheap; the point is to fix the statements so that other modules can build against them and so that a reviewer can judge them before proof effort is spent. A spec task is complete when the statements are final, the examples compile, and every open proof is registered.
+- A **spec** task writes a module's skeleton: the module docstring (purpose, the plan entry it implements, what it serves), definitions in final form, theorems *stated* with tracked `sorry`s, and the examples and non-examples. Prove what is cheap; the point is to fix the statements so that other modules can build against them and so that a reviewer can judge them before proof effort is spent. A spec task is complete when the statements are final, the examples compile, and every open proof is registered. If you closed every proof already, retire the matching `-prove` task in the same commit (set its `status: complete` with a `notes:` line saying the spec left nothing open) so that no session is spent discovering that.
 - A **prove** task closes the `sorry`s of a merged skeleton without touching its statements, keeps the examples compiling, and adds whatever auxiliary lemmas the proofs need (which must themselves be in Mathlib style and may be upstream-worthy).
 - A task that is neither is small enough to do both at once; do the spec first and commit it before starting proofs, so that a checkpoint exists.
 
