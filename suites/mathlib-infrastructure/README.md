@@ -115,6 +115,12 @@ replacing the placeholders. See the repository README for the copy procedure.
   merged statements change only through an accepted proposal.
 - Open proofs are allowed and tracked; silent weakening, deletion, `axiom`
   and `native_decide` are not.
+- The quality indicators of RemyDegenne/lean-quality-indicators (unnecessary
+  hypotheses, Mathlib duplicates, definition fidelity, statement generality,
+  vacuity, repeated machinery, proof simplification, explicit unfoldings) are
+  acceptance criteria for the worker and a checklist for the reviewer; the
+  target repository is expected to gate the mechanical ones (linter warnings,
+  `runLinter`) and to list the rest in `AGENTS.md`.
 
 ## Evaluation and provenance
 
