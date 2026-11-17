@@ -37,7 +37,10 @@ Use this suite when:
 ## Assumptions and configuration
 
 - Status: experimental. Written 2026-11-06 for the Kock2003 project
-  (Frobenius algebras and 2D TQFTs above Mathlib); not yet run.
+  (Frobenius algebras and 2D TQFTs above Mathlib) and run on it twice: as is
+  for the infrastructure campaign (2026-11-06/07) and as Part I of
+  `mixed-book-and-infrastructure` for the book phase (2026-11-09/17). See
+  Evaluation.
 - Runner: Tend's generated `--agent tend` scripts.
 - Repository assumptions. The prompts expect, in the target repository:
   - `AGENTS.md` with the working agreement, including: the build and
@@ -129,5 +132,61 @@ extracted from the CE2012 project's prompts) by the Kock2003 project's
 operator session on 2026-11-06: the source-text comparison was replaced by
 comparison with a plan, the spec/prove split, the examples and vacuity
 requirements, the question and proposal channels and the blocked-contract
-extension were added. No third-party prompt text is included. No run has been
-recorded yet.
+extension were added. No third-party prompt text is included.
+
+### Run 1: the Kock2003 infrastructure campaign (2026-11-06 to 2026-11-07)
+
+- Suite as in commit `ac31648` of this repository, placeholders filled as in the
+  table above. Tend commit `fad93f6`, `--agent tend` launchers, Anthropic
+  `claude-opus-5-5` for both roles (reasoning effort high, forced tool choice
+  disabled), 8 workers / 3 reviewers, validation `bash scripts/validate.sh`
+  (build, `sorry` allowlist, aftk debt gate, Mathlib linter gate), full gate
+  before merge.
+- Task set: 53 tasks against a plan of three layers (algebra of Frobenius
+  algebras and pairings; monoidal categories, a generic presentation engine,
+  Frobenius objects, the simplex categories, the presented and combinatorial
+  `2Cob`, the universal properties and the main theorem; the smooth cobordism
+  interface), as spec/prove pairs with roll-ups; 54 worktrees; about 9 hours;
+  496 USD.
+- Results: 68 modules, about 37 700 lines, 714 definitions, 353 examples; the
+  main theorem (2-dimensional TQFTs ≌ commutative Frobenius algebras) proved
+  with no open input for the presented and the combinatorial `2Cob`, which
+  were proved equivalent; 25 open proofs, all in the smooth cobordism
+  interface, where the plan had asked for statements only. Axioms checked.
+- The channels were used as intended. Two operator questions: one chose
+  namespaces; the other reported that the plan's statement "for every braided
+  category" of the book's 3.6.19 is false (a reviewer supplied the
+  counterexample, a Lagrangian algebra in a Drinfeld centre) and proposed the
+  true restricted form, which the operator kept. Two proposals, both accepted:
+  one replaced two false lemmas about disjoint unions of smooth embeddings by
+  proved finite-dimensional versions, the other corrected the plan's
+  description of the combinatorial `2Cob` (partitions cannot record closed
+  components). Spec tasks that left nothing open retired their prove twins
+  after the rule was added mid-run.
+- Flaws found and fixed in the target project's `AGENTS.md`: (1) the sentinel
+  task was reachable: it depended on the campaign-final roll-up, which an agent
+  completed while two `ask-*` tasks were still parked, so the sentinel was
+  completed too and the parked tasks were launched in a respawn loop until the
+  operator paused; (2) spec tasks that closed every proof left redundant prove
+  twins. Neither flaw is in the prompts themselves, but the suite now says
+  what to do (below).
+
+### Run 2: Part I of `mixed-book-and-infrastructure` (2026-11-09 to 2026-11-17)
+
+The `infra-*` tasks of the Kock2003 book phase ran under this suite's rules
+through the mixed suite: 9 planned infrastructure tasks (the classification of
+compact 1-manifolds, the connectedness of `Diff⁺(S¹)`, small additions) and 6
+more that agents spawned themselves as helper or library tasks (isotopy of
+cylinders, universe lifts, a parity lemma, the Koszul sign symmetry on graded
+objects, a copairing API). All completed; the 1-manifold classification is
+proved. See the mixed suite's README for the whole run.
+
+### What the runs taught about parking questions
+
+A task that cannot complete until the operator answers (a campaign-final
+roll-up, typically) must **add the open `ask-*` tasks to its own `depends_on`
+and return `blocked`**. Returning `needs_review` or `completed` with the task
+left open leaves it *ready*, and Tend relaunches it after every merge: in run 2
+the book roll-up was relaunched 15 times while three questions were open (each
+round closed another proof, so the spend was not wasted, but it was
+unbounded) until the operator paused. The worker system prompt now says so.

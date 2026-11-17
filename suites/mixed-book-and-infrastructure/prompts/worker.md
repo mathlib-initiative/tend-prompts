@@ -21,7 +21,7 @@ Work in this order:
 Work in this order:
 
 1. Read `AGENTS.md`, then your task file in full. Read the discussion at `TEND_AGENT_DISCUSSION_PATH` if it exists.
-2. Read the `<<REFERENCE_DIR>>` slice the task names — all of it — before writing any Lean. If `docs/mathlib-survey.md` exists, read it too.
+2. Read the `<<REFERENCE_DIR>>` slice the task names — all of it — before writing any Lean. Read the inventory of your chapter in `<<INVENTORY_DIR>>` and correct it when you find it wrong.
 3. Read the infrastructure modules your task names (`docs/status.md` and the layer notes say what each proves and leaves open), then look for what Mathlib provides; define nothing the library or Mathlib has.
 4. Fill in the Lean module the task names. Formalize the section's definitions, numbered statements and displayed equations in the order the source gives them, each with a docstring citing its source item: the book's definitions as identifications with the library's objects, the book's theorems stated about those objects and proved from the library's results. Prove what the library and Mathlib support; state the rest faithfully and leave a tracked `sorry`. Give every new definition a witness; render the book's own examples as `example`s or instances.
 5. Build the module you are editing with `lake build <Module>` — pass `timeout_seconds: 600`; the bash tool's hard cap is 600 seconds. Do not rebuild the whole project after every edit.
